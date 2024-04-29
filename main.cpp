@@ -1,10 +1,12 @@
-#define _USE_MATH_DEFINES
-
 #include "main.h"
 #include <cmath>
 #include <math.h>
 #include "rc.h"
 #include "resource.h"
+#include <numbers>
+
+
+static COLORREF custCols[16];
 
 int number_dialog::idd() const {
 	return IDD_NUMBER;
@@ -39,7 +41,7 @@ void main_window::on_paint(HDC hdc) {
 		SetWindowExtEx(hdc, rc.bottom, rc.bottom, NULL);
 //		SetViewportOrgEx(hdc, rc.right / 2, rc.bottom / 2, 0);
 		for (int i = 0; i < default_number; ++i) {
-			double a = 2 * M_PI * i / default_number;
+			double a = 2 * std::numbers::pi * i / default_number;
 			double x = rc.bottom / 2 + r * cos(a);
 			double y = rc.bottom / 2 + r * sin(a);
 			::Ellipse(hdc, x + r, y + r, x - r, y - r);
@@ -48,29 +50,31 @@ void main_window::on_paint(HDC hdc) {
 	}
 	else {
 		for (int i = 0; i < default_number; ++i) {
-			double a = 2 * M_PI * i / default_number;
+			double a = 2 * std::numbers::pi * i / default_number;
 			double x = rc.right / 2 + r * cos(a);
 			double y = rc.bottom / 2 + r * sin(a);
 			::Ellipse(hdc, x + r, y + r, x - r, y - r);
 		}
 	}
-
+	SelectObject(hdc, brush);
 	DeleteObject(brush);
+	SelectObject(hdc, pen);
 	DeleteObject(pen);
 }
 
 void main_window::on_command(int id){
 	switch(id){
 		case ID_COLOR: {
-			COLORREF custCols[16] = { 0 };
 			CHOOSECOLOR cc;
 			ZeroMemory(&cc, sizeof cc);
 			cc.lStructSize = sizeof cc;
 			cc.Flags = CC_FULLOPEN | CC_RGBINIT;
 			cc.lpCustColors = custCols;
 			cc.rgbResult = default_color;
+			cc.hwndOwner = *this;
 			if (ChooseColor(&cc))
 				default_color = cc.rgbResult;
+			::InvalidateRect(*this, 0, true);
 			break;
 		}
 		case ID_NUMBER: {
@@ -78,6 +82,7 @@ void main_window::on_command(int id){
 			nd.number = default_number;
 			if (nd.do_modal(0, *this) == IDOK) {
 				default_number = nd.number;
+				::InvalidateRect(*this, 0, true);
 			}
 			break;
 		}
@@ -85,13 +90,13 @@ void main_window::on_command(int id){
 			is_anisotropic = !is_anisotropic;
 			InvalidateRect(*this, nullptr, true);
 			::CheckMenuItem(::GetMenu(*this), ID_FILE_ANISOTROPIC, is_anisotropic ? MF_CHECKED : MF_UNCHECKED);
+			::InvalidateRect(*this, 0, true);
 			break;
 		}
 		case ID_EXIT: 
 			DestroyWindow(*this); 
 			break;
 	}
-	::InvalidateRect(*this, 0, true);
 }
 
 void main_window::on_destroy(){
