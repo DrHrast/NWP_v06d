@@ -56,10 +56,8 @@ void main_window::on_paint(HDC hdc) {
 			::Ellipse(hdc, x + r, y + r, x - r, y - r);
 		}
 	}
-	SelectObject(hdc, brush);
-	DeleteObject(brush);
-	SelectObject(hdc, pen);
-	DeleteObject(pen);
+	DeleteObject(selected_brush);
+	DeleteObject(selected_pen);
 }
 
 void main_window::on_command(int id){
