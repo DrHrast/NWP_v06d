@@ -5,6 +5,32 @@
 #include "resource.h"
 #include <numbers>
 
+class pen {
+	HPEN h;
+public:
+	pen(COLORREF color, int width = 1, int style = PS_SOLID) :
+		h(::CreatePen(style, width, color)) {}
+	~pen() { ::DeleteObject(h); }
+	operator HPEN() { return h; }
+};
+
+class brush {
+	HBRUSH h;
+public:
+	brush(COLORREF color, int hatch = -1) :
+		h(hatch >= 0 ? CreateHatchBrush(hatch, color) : ::CreateSolidBrush(color)) {}
+	~brush() { ::DeleteObject(h); }
+	operator HBRUSH() { return h; }
+};
+
+class sel_obj {
+	HDC hdc;
+	HGDIOBJ hOld;
+public:
+	sel_obj(HDC hdc, HGDIOBJ hObj) :
+		hdc(hdc), hOld(::SelectObject(hdc, hObj)) { }
+	~sel_obj() { ::SelectObject(hdc, hOld); }
+};
 
 static COLORREF custCols[16];
 
@@ -29,10 +55,14 @@ void main_window::on_paint(HDC hdc) {
 	RECT rc;
 	::GetClientRect(*this, &rc);
 	int r = rc.bottom / 4;
-	HBRUSH brush = CreateSolidBrush(default_color);
+	/*HBRUSH brush = CreateSolidBrush(default_color);
 	HGDIOBJ selected_brush = SelectObject(hdc, brush);
 	HPEN pen = CreatePen(PS_SOLID, 1, default_color);
-	HGDIOBJ selected_pen = SelectObject(hdc, pen);
+	HGDIOBJ selected_pen = SelectObject(hdc, pen);*/
+	pen c_pen { default_color, 1, PS_SOLID };
+	brush c_brush{ default_color };
+	sel_obj sel_pen{ hdc, c_pen };
+	sel_obj sel_brush{ hdc, c_brush };
 
 	SetROP2(hdc, R2_NOTXORPEN);
 	if (is_anisotropic) {
@@ -56,8 +86,6 @@ void main_window::on_paint(HDC hdc) {
 			::Ellipse(hdc, x + r, y + r, x - r, y - r);
 		}
 	}
-	DeleteObject(selected_brush);
-	DeleteObject(selected_pen);
 }
 
 void main_window::on_command(int id){
